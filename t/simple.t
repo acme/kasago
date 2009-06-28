@@ -8,7 +8,6 @@ use Kasago;
 use Test::More tests => 15;
 
 dir('t/kasago')->rmtree;
-dir('t/kasago')->mkpath;
 my $kasago = Kasago->new( root => 't/kasago' );
 $kasago->add_files('t/small/hello.pl');
 
