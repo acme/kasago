@@ -92,7 +92,9 @@ sub search_html {
     my @hits;
     while ( my $hit = $hits->next ) {
         my $excerpt = $highlighter->create_excerpt($hit);
+        my $score   = $hit->get_score;
         $hit->{excerpt} = $excerpt;
+        $hit->{score}   = $score;
         push @hits, $hit;
     }
 
