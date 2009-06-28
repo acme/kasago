@@ -7,10 +7,10 @@ use Perl6::Say;
 
 my $search = shift || die 'no search';
 
-my $kasago = Kasago->new(root => 't/kasago');
+my $kasago = Kasago->new( root => 't/kasago' );
 my $hits = $kasago->search_html($search);
 
-while ( my $hit = $hits->fetch_hit_hashref ) {
+foreach my $hit (@$hits) {
     my $filename = $hit->{filename};
     my $score    = $hit->{score};
     my $excerpt  = $hit->{excerpt};
