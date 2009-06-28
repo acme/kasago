@@ -1,0 +1,37 @@
+#!perl
+use strict;
+use lib qw(lib);
+use Cwd;
+use DBI;
+use Kasago;
+use Path::Class;
+use Term::ANSIColor;
+    
+my $dsn    = "DBI:Pg:dbname=kasago_test";
+my $dbh    = DBI->connect($dsn, "", "");
+my $kasago = Kasago->new({ dbh => $dbh });
+
+my $search = shift;
+foreach my $hit ($kasago->search_more_merged($search)) {
+  print $hit->source . "/"
+    . $hit->file . "@"
+    . $hit->row . ": "
+    . $hit->line . "\n";
+  foreach my $token (@{ $hit->tokens }) {
+    print "  @" . $token->col . ": " . $token->value . "\n";
+  }
+
+  next;
+
+  my $line = $hit->line;
+#  print $hit->file . "@" . $hit->line . ": $content\n";
+
+  foreach my $token (@{$hit->tokens}) {
+#    print $hit->file . "@" . $hit->line . "," . $token->col . ": " 
+#  . $token->value . "\n";
+#    print "  " . $token->value . "\n";
+    my $value = quotemeta($token->value);
+    $line =~ s{($value)}{color('bold') . $1 . color('reset')}eg;
+  }
+  print $hit->source . " " . $hit->file . ": $line\n";
+}

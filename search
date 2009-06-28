@@ -1,0 +1,42 @@
+#!perl
+use strict;
+use lib qw(lib);
+use Cwd;
+use DBI;
+use Kasago;
+use Path::Class;
+use Term::ANSIColor;
+
+# Term::ANSIColor::Interactive
+#    $is_windows     = ($^O =~ /MSWin32/);
+#    $to_screen      = -t *STDOUT;
+    
+my $kasago = Kasago->new( { root => 'invindex' } );
+
+my $search = shift || die 'No search term';
+                
+foreach my $token ( $kasago->search($search) ) {
+
+    #  print $token->source . "/"
+    #    . $token->file . "@"
+    #    . $token->col . ","
+    #    . $token->row . ": "
+    #    . $token->line . "\n";
+    #  next;
+    my $source = $token->source;
+    my $file   = $token->file;
+    my $col    = $token->col;
+    my $row    = $token->row;
+    my $line   = $token->line;
+    my $value  = $token->value;
+    my $length = length($value);
+
+    my $highlighted_line
+        = substr( $line, 0, $col - 1 )
+        . colored(substr( $line, $col - 1, $length ), 'black on_yellow')
+        . substr( $line, $col - 1 + $length );
+
+#  print $token->source . " " . $token->file . "@" . $token->line . "," . $token->col . ": "
+#  . $value . "\n";
+    print Term::ANSIColor::colored( $file, 'bold green' ) . ":$row:$highlighted_line\n";
+}

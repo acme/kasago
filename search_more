@@ -1,0 +1,29 @@
+#!perl
+use strict;
+use lib qw(lib);
+use Cwd;
+use DBI;
+use Kasago;
+use Path::Class;
+use Term::ANSIColor;
+    
+my $dsn    = "DBI:Pg:dbname=kasago_test";
+my $dbh    = DBI->connect($dsn, "", "");
+my $kasago = Kasago->new({ dbh => $dbh });
+
+my $search = shift;
+foreach my $token ($kasago->search_more($search)) {
+  print $token->source . "/"
+    . $token->file . "@"
+    . $token->col . ","
+    . $token->row . ": "
+    . $token->line . "\n";
+  next;
+  my $line = $token->line;
+  my $value = $token->value;
+  my $length = length($value);
+  $value = substr($line, 0, $token->col-1) . color('bold') . substr($line, $token->col-1, $length) .
+  color('reset') . substr($line, $token->col-1+$length);
+  print $token->source . " " . $token->file . "@" . $token->row . "," . $token->col . ": " 
+  . $value . "\n";
+}

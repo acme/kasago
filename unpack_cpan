@@ -1,0 +1,7 @@
+#!perl
+use strict;
+use CPAN::Unpack;
+my $u = CPAN::Unpack->new;
+$u->cpan("/Users/acme/cpan/CPAN/");
+$u->destination("cpan_unpacked/");
+$u->unpack;

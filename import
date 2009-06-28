@@ -1,0 +1,29 @@
+#!perl
+use strict;
+use Cwd;
+use File::Find::Rule;
+use Path::Class;
+use lib qw(lib);
+use Kasago;
+ # use PPI::Cache path => '/home/acme/hg/Kasago/ppi_cache';
+  
+my $kasago = Kasago->new( { root => 'invindex' } );
+#$kasago->import( 'test', 'small' );
+$kasago->import( 'test', 'lib' );
+#$kasago->import( 'test', '/home/acme/hg/' );
+__END__
+
+#my @tokens = $kasago->_tokenise_perl('import');
+#use YAML; print Dump \@tokens;
+#$kasago->init;
+
+my $base = 'small';
+foreach my $dir ( File::Find::Rule->new()->directory->maxdepth(1)->in($base) )
+{
+    next if ( $dir eq $base );
+#    next unless $dir =~ /Acme-/i;
+    my $source = dir($dir)->relative($base);
+    print "$source $dir\n";
+    $kasago->import( $source, $dir );
+    $kasago->_tokenise_perl($source);
+}

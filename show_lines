@@ -1,0 +1,32 @@
+#!perl
+use strict;
+use Cwd;
+use File::Find::Rule;
+use Path::Class;
+use lib qw(lib);
+use Kasago;
+use KinoSearch::Searcher;
+use KinoSearch::Search::TermQuery;
+use KinoSearch::Index::Term;
+
+my $searcher = KinoSearch::Searcher->new( invindex => 'invindex/lines', );
+
+#my $query = 'test';
+my $query = KinoSearch::Search::TermQuery->new(
+    term => KinoSearch::Index::Term->new( 'source', 'test' ) );
+my $hits = $searcher->search( query => $query );
+
+while ( my $hit = $hits->fetch_hit_hashref ) {
+    my $source = $hit->{source};
+    my $file   = $hit->{file};
+    my $row    = $hit->{row};
+    my $line   = $hit->{line};
+    my $score  = $hit->{score};
+
+    #use YAML; die Dump $hit;
+    print "$source $file $row $line\n";
+}
+
+#my $kasago = Kasago->new( { root => 'invindex' } );
+
+#my $lines_invindex = $kasago->lines_invindex;
