@@ -8,18 +8,13 @@ use KinoSearch::Analysis::PolyAnalyzer;
 use KinoSearch::Indexer;
 use KinoSearch::Searcher;
 use KinoSearch::Search::TermQuery;
-
+use MooseX::Types::Path::Class;
 use Path::Class;
 use Perl6::Say;
 use PPIAnalyzer;
 
-subtype 'Directory' => as 'Str' => where { -d $_ } =>
-    message {"$_ is not a directory"};
-
-coerce 'Directory' => from 'Object' =>
-    via { $_->isa('Path::Class::Dir') && $_->stringify };
-
-has 'root' => ( is => 'ro', isa => 'Directory', required => 1, coerce => 1 );
+has 'root' =>
+    ( is => 'ro', isa => 'Path::Class::Dir', required => 1, coerce => 1 );
 
 our $VERSION = '0.30';
 
