@@ -36,9 +36,7 @@ sub add_files {
         stored  => 1,
     );
     my $code_type = KinoSearch::FieldType::FullTextType->new(
-        analyzer => $analyzer,
-
-        #        analyzer      => KinoSearch::Analysis::Tokenizer->new,
+        analyzer      => $analyzer,
         indexed       => 1,
         stored        => 1,
         highlightable => 1,
