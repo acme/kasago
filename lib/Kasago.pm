@@ -3,14 +3,12 @@ use Moose;
 use Moose::Util::TypeConstraints;
 use File::Slurp;
 use Kasago::Analyzer;
-use Kasago::Highlighter;
-use Kasago::ShortHighlighter;
 use KinoSearch;
 use KinoSearch::Analysis::PolyAnalyzer;
-use KinoSearch::InvIndexer;
+use KinoSearch::Indexer;
 use KinoSearch::Searcher;
 use KinoSearch::Search::TermQuery;
-use KinoSearch::Index::Term;
+
 use Path::Class;
 use Perl6::Say;
 use PPIAnalyzer;
@@ -29,56 +27,79 @@ sub add_files {
     my ( $self, @filenames ) = @_;
     my $root = $self->root;
 
-    my $analyzer   = Kasago::Analyzer->new();
-    my $invindexer = KinoSearch::InvIndexer->new(
-        invindex => $root,
-        create   => 1,
+    my $analyzer = Kasago::Analyzer->new();
+
+    # Create a Schema which defines index fields.
+    my $schema        = KinoSearch::Schema->new;
+    my $filename_type = KinoSearch::FieldType::StringType->new(
+        indexed => 0,
+        stored  => 1,
+    );
+    my $code_type = KinoSearch::FieldType::FullTextType->new(
         analyzer => $analyzer,
+
+        #        analyzer      => KinoSearch::Analysis::Tokenizer->new,
+        indexed       => 1,
+        stored        => 1,
+        highlightable => 1,
     );
-    $invindexer->spec_field(
-        name       => 'filename',
-        analyzed   => 0,
-        vectorized => 0,
-        stored     => 1,
-    );
-    $invindexer->spec_field(
-        name       => 'code',
-        analyzed   => 1,
-        vectorized => 1,
-        stored     => 1,
+    $schema->spec_field( name => 'filename', type => $filename_type );
+    $schema->spec_field( name => 'code',     type => $code_type );
+
+    # Create the index and add documents.
+    my $indexer = KinoSearch::Indexer->new(
+        schema => $schema,
+        index  => $root,
+        create => 1,
     );
 
     foreach my $filename (@filenames) {
         my $perl      = read_file($filename);
         my $tokenizer = PPI::Tokenizer->new( \$perl );
-        warn $filename;
-        my $tokens = $tokenizer->all_tokens;
+        my $tokens    = $tokenizer->all_tokens;
         next unless $tokens;
         $perl = join '', map { $_->content } @$tokens;
 
-        my $doc = $invindexer->new_doc;
-        $doc->set_value( filename => $filename );
-        $doc->set_value( code     => $perl );
-        $invindexer->add_doc($doc);
+        $indexer->add_doc(
+            {   filename => $filename,
+                code     => $perl,
+            }
+        );
     }
 
-    $invindexer->finish( optimize => 1 );
+    $indexer->commit;
+    $indexer->optimize;
 }
 
 sub search_html {
-    my ( $self, $search ) = @_;
-    my $root          = $self->root;
-    my $analyzer      = Kasago::Analyzer->new();
-    my $code_searcher = KinoSearch::Searcher->new(
-        invindex => $root,
+    my ( $self, $query ) = @_;
+    my $root = $self->root;
 
-        #analyzer => $analyzer,
+    my $searcher = KinoSearch::Searcher->new( index => $root );
+
+    my $hits = $searcher->hits(
+        query      => $query,
+        offset     => 0,
+        num_wanted => 10,
     );
 
-    my $hits = $code_searcher->search( query => $search );
-    my $highlighter = Kasago::Highlighter->new( excerpt_field => 'code', );
-    $hits->create_excerpts( highlighter => $highlighter );
-    return $hits;
+    my $highlighter = KinoSearch::Highlight::Highlighter->new(
+        searchable => $searcher,
+        query      => $query,
+        field      => 'code',
+    );
+
+    my @hits;
+    while ( my $hit = $hits->next ) {
+        my $excerpt = $highlighter->create_excerpt($hit);
+        $hit->{excerpt} = $excerpt;
+        push @hits, $hit;
+    }
+
+  #    my $highlighter = Kasago::Highlighter->new( excerpt_field => 'code', );
+  #    $hits->create_excerpts( highlighter => $highlighter );
+  #    return $hits;
+    return \@hits;
 }
 
 sub search_html_short {
@@ -92,7 +113,8 @@ sub search_html_short {
     );
 
     my $hits = $code_searcher->search( query => $search );
-    my $highlighter = Kasago::ShortHighlighter->new( excerpt_field => 'code', );
+    my $highlighter
+        = Kasago::ShortHighlighter->new( excerpt_field => 'code', );
     $hits->create_excerpts( highlighter => $highlighter );
     return $hits;
 }

@@ -7,16 +7,22 @@ use Path::Class;
 use Kasago;
 use Test::More tests => 15;
 
+dir('t/kasago')->rmtree;
+dir('t/kasago')->mkpath;
 my $kasago = Kasago->new( root => 't/kasago' );
 $kasago->add_files('t/small/hello.pl');
 
-my($hits, $hit, $filename, $excerpt);
+my ( $hits, $hit, $filename, $excerpt );
 
-$hits = $kasago->search_html('use');
-is( $hits->total_hits, 1 );
-$hit      = $hits->fetch_hit_hashref;
+my @hits = @{ $kasago->search_html('use') };
+is( @hits, 1 );
+$hit      = $hits[0];
 $filename = $hit->{filename};
-$excerpt  = $hit->{excerpt};
+
+#die $filename;
+$excerpt = $hit->{excerpt};
+
+#die $excerpt;
 is( $filename, 't/small/hello.pl' );
 is( $excerpt, '#!perl
 <strong>use</strong> strict;
@@ -26,13 +32,12 @@ my $sexy = 1;
 
 $sexy = $sexy * 2;
 
-print &quot;Hello world!\n&quot;;
-'
+print &quot;Hello world!\n&quot;;'
 );
 
-$hits = $kasago->search_html('strict');
-is( $hits->total_hits, 1 );
-$hit      = $hits->fetch_hit_hashref;
+@hits = @{ $kasago->search_html('strict') };
+is( @hits, 1 );
+$hit      = $hits[0];
 $filename = $hit->{filename};
 $excerpt  = $hit->{excerpt};
 is( $filename, 't/small/hello.pl' );
@@ -44,13 +49,12 @@ my $sexy = 1;
 
 $sexy = $sexy * 2;
 
-print &quot;Hello world!\n&quot;;
-'
+print &quot;Hello world!\n&quot;;'
 );
 
-$hits = $kasago->search_html('warnings');
-is( $hits->total_hits, 1 );
-$hit      = $hits->fetch_hit_hashref;
+@hits = @{ $kasago->search_html('warnings') };
+is( @hits, 1 );
+$hit      = $hits[0];
 $filename = $hit->{filename};
 $excerpt  = $hit->{excerpt};
 is( $filename, 't/small/hello.pl' );
@@ -62,13 +66,12 @@ my $sexy = 1;
 
 $sexy = $sexy * 2;
 
-print &quot;Hello world!\n&quot;;
-'
+print &quot;Hello world!\n&quot;;'
 );
 
-$hits = $kasago->search_html('$sexy');
-is( $hits->total_hits, 1 );
-$hit      = $hits->fetch_hit_hashref;
+@hits = @{ $kasago->search_html('$sexy') };
+is( @hits, 1 );
+$hit      = $hits[0];
 $filename = $hit->{filename};
 $excerpt  = $hit->{excerpt};
 is( $filename, 't/small/hello.pl' );
@@ -80,13 +83,12 @@ my <strong>$sexy</strong> = 1;
 
 <strong>$sexy</strong> = <strong>$sexy</strong> * 2;
 
-print &quot;Hello world!\n&quot;;
-'
+print &quot;Hello world!\n&quot;;'
 );
 
-$hits = $kasago->search_html('print');
-is( $hits->total_hits, 1 );
-$hit      = $hits->fetch_hit_hashref;
+@hits = @{ $kasago->search_html('print') };
+is( @hits, 1 );
+$hit      = $hits[0];
 $filename = $hit->{filename};
 $excerpt  = $hit->{excerpt};
 is( $filename, 't/small/hello.pl' );
@@ -98,8 +100,7 @@ my $sexy = 1;
 
 $sexy = $sexy * 2;
 
-<strong>print</strong> &quot;Hello world!\n&quot;;
-'
+<strong>print</strong> &quot;Hello world!\n&quot;;'
 );
 
 __END__

@@ -6,11 +6,12 @@ use PPI;
 use PPI::Tokenizer;
 use base qw( KinoSearch::Analysis::Analyzer );
 
-sub analyze {
-    my ( $self, $batch ) = @_;
-    my $new_batch = KinoSearch::Analysis::TokenBatch->new();
-    $batch->next;
-    my $perl = $batch->get_text;
+sub transform {
+    my ( $self, $inversion ) = @_;
+    my $new_inversion = KinoSearch::Analysis::Inversion->new();
+
+    #    $inversion->next;
+    my $perl = $inversion->next->get_text;
 
     my $pos_inc      = 0;
     my $start_offset = 0;
@@ -83,23 +84,30 @@ sub analyze {
         }
 
         if ($text) {
+
             # say "$text";
             my $substr = substr( $perl, $start_offset,
                 $stop_offset - $start_offset );
 
             die "  $substr != $text" if $substr ne $text;
 
-            $new_batch->append( $text, $start_offset, $stop_offset,
-                $pos_inc++ );
+            my $token = KinoSearch::Analysis::Token->new(
+                text         => $text,
+                start_offset => $start_offset,
+                end_offset   => $stop_offset,
+                pos_inc      => $pos_inc++,
+            );
+            # warn "$text / $start_offset / $stop_offset / $pos_inc";
+            $new_inversion->append($token);
 
         }
         $start_offset += $content_length;
     }
 
-    $batch->reset;
+    $inversion->reset;
 
-    $new_batch->reset;
-    return $new_batch;
+    $new_inversion->reset;
+    return $new_inversion;
 }
 
 1;
