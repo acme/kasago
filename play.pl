@@ -1,4 +1,4 @@
-#!perl
+#!/home/acme/perl-5.10.0/bin/perl
 use strict;
 use warnings;
 use lib qw(lib);
@@ -7,7 +7,7 @@ use Kasago;
 use List::Util qw(shuffle);
 use Path::Class;
 
-my $root = shift;
+my $root = shift || die "No path passed";
 
 my $kasago = Kasago->new(root => 't/kasago');
 
